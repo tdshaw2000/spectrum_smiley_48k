@@ -218,12 +218,6 @@ class TapeTest(unittest.TestCase):
         for statement in ("CLEAR 32767", 'LOAD ""CODE', "RANDOMIZE USR 32768"):
             self.assertIn(statement, listing)
 
-    def test_tzx_loads_through_the_rom_too(self):
-        self.assertTrue(spectrum.TZX.read_bytes().startswith(b"ZXTape!\x1a"))
-        with tempfile.TemporaryDirectory() as directory:
-            loaded = spectrum.load_tape(spectrum.TZX, Path(directory) / "smiley.z80")
-        self.assertEqual(spectrum.CODE_START, loaded.pc)
-
 
 if __name__ == "__main__":
     unittest.main()

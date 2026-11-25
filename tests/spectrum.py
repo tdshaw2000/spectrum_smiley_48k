@@ -13,7 +13,6 @@ from skoolkit.snapshot import Snapshot
 
 BUILD_DIR = Path(__file__).resolve().parent.parent / "build"
 TAP = BUILD_DIR / "smiley.tap"
-TZX = BUILD_DIR / "smiley.tzx"
 SYMBOLS = BUILD_DIR / "smiley.sym"
 SCRIPTS_DIR = Path(sys.executable).parent
 
@@ -53,7 +52,7 @@ def symbols():
     table = {}
     for line in SYMBOLS.read_text().splitlines():
         name, _, value = line.split()
-        table[name] = int(value.rstrip("H"), 16)
+        table[name.rstrip(":")] = int(value, 16)
     return table
 
 
