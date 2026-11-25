@@ -14,25 +14,33 @@ which waits for the tape.)
 ## Build
 
 ```
-sudo apt install pasmo make
-make          # build/smiley.tap, .tzx, .lst (listing), .sym (symbols), .bin
+make          # build/smiley.tap, .lst (listing), .sym (symbols)
 make clean    # delete build/
 ```
 
-pasmo's listing is its debug output (`-d`): addresses, bytes and instructions, with
-no comments.
+You need `make` and [sjasmplus](https://github.com/z00m128/sjasmplus). Ubuntu has no
+package for sjasmplus, so build it from source, without root after the first line:
+
+```
+sudo apt install g++ make
+curl -LO https://github.com/z00m128/sjasmplus/releases/download/v1.24.0/sjasmplus-1.24.0-src.tar.xz
+echo "0b5013f07e8d8505f9e296529655668b6fdf0268625c19e883b0fff484e209f1  sjasmplus-1.24.0-src.tar.xz" | sha256sum -c
+tar -xJf sjasmplus-1.24.0-src.tar.xz
+make -C sjasmplus-1.24.0
+install -m 755 sjasmplus-1.24.0/build/release/sjasmplus ~/.local/bin/
+```
 
 ## Load
 
-Open `build/smiley.tap` (or `.tzx`) in Fuse. If it doesn't load by itself, type
+Open `build/smiley.tap` in Fuse. If it doesn't load by itself, type
 `LOAD ""` and press ENTER. On a 48K Spectrum, that is `J`, then SYMBOL SHIFT + `P`
 twice. Then start the tape.
 
-The tape starts with a BASIC program that pasmo writes:
+The tape starts with a BASIC program, written out in `src/loader.asm`:
 
 ```
 10 CLEAR 32767            keep BASIC and its stack below our code at 32768
-20 POKE 23610,255         ERR_NR = "no error" (pasmo adds this)
+20 POKE 23610,255         ERR_NR = "no error"
 30 LOAD ""CODE            load the machine code
 40 RANDOMIZE USR 32768    run it
 ```

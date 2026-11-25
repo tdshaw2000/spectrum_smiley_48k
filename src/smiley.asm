@@ -3,7 +3,7 @@
 ;
 ;   Z = left   X = right   O = up   K = down   CAPS SHIFT + SPACE = BREAK
 ;
-; Assembled with pasmo. See README.md for the screen and keyboard explanation.
+; Assembled with sjasmplus. See README.md for the screen and keyboard explanation.
 ;
 ; Conventions used throughout:
 ;   * A cell is passed in BC: B = row (0-23), C = column (0-31).
@@ -61,6 +61,10 @@ MOVE_DOWN         equ $0100     ; row +1, column  0
 
 ; One move every 6 frames: 50 / 6 = 8.3 moves per second.
 REPEAT_FRAMES     equ 6
+
+        ; Assemble into the memory of an imaginary 48K Spectrum. SAVETAP, at the
+        ; end of this file, saves parts of that memory to the tape.
+        device ZXSPECTRUM48
 
         org CODE_START
 
@@ -334,6 +338,15 @@ position:
         defw 0
 repeat_delay:                   ; frames to wait before a held key moves again
         defb 0
+code_end:
 
-        ; END with an address makes pasmo's BASIC loader run the code from there.
-        end start
+; -----------------------------------------------------------------------------
+; The tape: the BASIC loader, then the machine code. Each SAVETAP writes a
+; header block and a data block. The file goes in the folder that the Makefile
+; names with --outprefix.
+; -----------------------------------------------------------------------------
+        include "loader.asm"
+
+        emptytap "smiley.tap"
+        savetap "smiley.tap",BASIC,"loader",loader,loader_end-loader,AUTORUN_LINE
+        savetap "smiley.tap",CODE,"smiley",start,code_end-start
