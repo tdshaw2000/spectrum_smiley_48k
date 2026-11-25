@@ -9,7 +9,7 @@ PYTHON    ?= .venv/bin/python
 
 NAME      := smiley
 SOURCE    := src/$(NAME).asm
-INCLUDES  := src/loader.asm
+INCLUDES  := src/loader.asm src/screen.scr
 BUILD_DIR := build
 
 TAP     := $(BUILD_DIR)/$(NAME).tap

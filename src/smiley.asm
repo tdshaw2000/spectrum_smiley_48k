@@ -341,12 +341,21 @@ repeat_delay:                   ; frames to wait before a held key moves again
 code_end:
 
 ; -----------------------------------------------------------------------------
-; The tape: the BASIC loader, then the machine code. Each SAVETAP writes a
-; header block and a data block. The file goes in the folder that the Makefile
-; names with --outprefix.
+; The tape: the BASIC loader, the loading picture, then the machine code. Each
+; SAVETAP writes a header block and a data block. The file goes in the folder
+; that the Makefile names with --outprefix.
 ; -----------------------------------------------------------------------------
         include "loader.asm"
 
+        ; The picture is a copy of screen memory: 6144 pixel bytes, then 768
+        ; attributes. INCBIN reads a file's bytes into memory as they are.
+        org PIXELS_START
+picture:
+        incbin "screen.scr"
+picture_end:
+        assert picture_end-picture == PIXELS_LENGTH+ATTRIBUTES_LENGTH
+
         emptytap "smiley.tap"
         savetap "smiley.tap",BASIC,"loader",loader,loader_end-loader,AUTORUN_LINE
+        savetap "smiley.tap",CODE,"screen",picture,picture_end-picture
         savetap "smiley.tap",CODE,"smiley",start,code_end-start
