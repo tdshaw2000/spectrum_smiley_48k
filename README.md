@@ -40,10 +40,16 @@ The tape starts with a BASIC program, written out in `src/loader.asm`:
 
 ```
 10 CLEAR 32767            keep BASIC and its stack below our code at 32768
-20 POKE 23610,255         ERR_NR = "no error"
-30 LOAD ""CODE            load the machine code
-40 RANDOMIZE USR 32768    run it
+20 BORDER 4               green, to match the picture
+30 LOAD ""SCREEN$         load the picture into screen memory
+40 POKE 23739,111         stop printing, to hide "Bytes: smiley"
+50 LOAD ""CODE            load the machine code
+60 POKE 23739,244: RANDOMIZE USR 32768    print again, and run it
 ```
+
+The loading picture is `src/screen.scr`: 6912 bytes, a plain copy of screen memory
+(6144 pixel bytes, then 768 attributes). To change it, replace that file and run
+`make`.
 
 ## Test
 
