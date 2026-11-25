@@ -11,6 +11,7 @@ BLANK_CELL = ((0,) * 8, 0x07)
 SMILEY_CELL = (SMILEY, SMILEY_ATTRIBUTE)
 START_CELL = (10, 15)
 BLACK = 0
+GREEN = 4
 SETTLE_FRAMES = 10
 MORE_TAPS_THAN_CELLS = 40
 BASIC_IY = 0x5C3A
@@ -194,14 +195,22 @@ class TapeTest(unittest.TestCase):
             yield data[2:2 + length]
             data = data[2 + length:]
 
-    def test_tap_is_a_basic_header_and_data_then_a_code_header_and_data(self):
-        basic_header, basic, code_header, code = self.blocks()
+    def assert_code_block(self, header, data, name, start):
+        self.assertEqual((self.HEADER_FLAG, self.CODE), tuple(header[:2]))
+        self.assertEqual(self.DATA_FLAG, data[0])
+        self.assertEqual(name, header[2:12])
+        self.assertEqual(start, int.from_bytes(header[14:16], "little"))
+        self.assertEqual(len(data) - 2, int.from_bytes(header[12:14], "little"))
+
+    def test_tap_holds_basic_then_the_picture_then_the_code(self):
+        blocks = list(self.blocks())
+        self.assertEqual(6, len(blocks), "a header and data for each of BASIC, picture and code")
+        basic_header, basic, picture_header, picture, code_header, code = blocks
         self.assertEqual((self.HEADER_FLAG, self.BASIC_PROGRAM), tuple(basic_header[:2]))
-        self.assertEqual((self.HEADER_FLAG, self.CODE), tuple(code_header[:2]))
-        self.assertEqual((self.DATA_FLAG, self.DATA_FLAG), (basic[0], code[0]))
-        self.assertEqual(b"smiley    ", code_header[2:12])
-        self.assertEqual(spectrum.CODE_START, int.from_bytes(code_header[14:16], "little"))
-        self.assertEqual(len(code) - 2, int.from_bytes(code_header[12:14], "little"))
+        self.assertEqual(self.DATA_FLAG, basic[0])
+        self.assert_code_block(picture_header, picture, b"screen    ", spectrum.PIXELS_START)
+        self.assertEqual(spectrum.SCREEN_LENGTH, len(picture) - 2)
+        self.assert_code_block(code_header, code, b"smiley    ", spectrum.CODE_START)
 
     def test_every_block_checksum_is_valid(self):
         for number, block in enumerate(self.blocks(), start=1):
@@ -217,6 +226,28 @@ class TapeTest(unittest.TestCase):
         listing = spectrum.run_script("tapinfo.py", "-b", 2, spectrum.TAP)
         for statement in ("CLEAR 32767", 'LOAD ""CODE', "RANDOMIZE USR 32768"):
             self.assertIn(statement, listing)
+
+class LoadingPictureTest(unittest.TestCase):
+    """The state of the machine when the ROM has loaded the tape and enters our code."""
+
+    def setUp(self):
+        self.machine = Spectrum(snapshot)
+
+    def test_the_whole_picture_is_on_screen_with_nothing_printed_over_it(self):
+        picture = spectrum.PICTURE.read_bytes()
+        self.assertEqual(spectrum.SCREEN_LENGTH, len(picture))
+        screen = self.machine.memory[spectrum.PIXELS_START:][:spectrum.SCREEN_LENGTH]
+        wrong = [address for address, (expected, actual) in enumerate(zip(picture, screen), spectrum.PIXELS_START)
+                 if expected != actual]
+        self.assertEqual(0, len(wrong), f"screen bytes differ from the picture, first at {wrong[:1]}")
+
+    def test_border_is_green(self):
+        self.assertEqual(GREEN, self.machine.border)
+
+    def test_printing_to_the_upper_screen_works_again(self):
+        channel = spectrum.UPPER_SCREEN_CHANNEL
+        routine = self.machine.memory[channel] + 256 * self.machine.memory[channel + 1]
+        self.assertEqual(f"${spectrum.ROM_PRINT_OUT:04X}", f"${routine:04X}")
 
 
 if __name__ == "__main__":

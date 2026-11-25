@@ -14,6 +14,7 @@ from skoolkit.snapshot import Snapshot
 BUILD_DIR = Path(__file__).resolve().parent.parent / "build"
 TAP = BUILD_DIR / "smiley.tap"
 SYMBOLS = BUILD_DIR / "smiley.sym"
+PICTURE = BUILD_DIR.parent / "src" / "screen.scr"
 SCRIPTS_DIR = Path(sys.executable).parent
 
 CODE_START = 0x8000
@@ -26,6 +27,9 @@ COLUMNS = 32
 CELL_LINES = 8
 PIXELS_START = 0x4000
 ATTRIBUTES_START = 0x5800
+SCREEN_LENGTH = 6912
+UPPER_SCREEN_CHANNEL = 23739  # address of the routine that prints to the upper screen
+ROM_PRINT_OUT = 0x09F4
 
 # (half-row address line, bit) for each key the tests press.
 KEYS = {
